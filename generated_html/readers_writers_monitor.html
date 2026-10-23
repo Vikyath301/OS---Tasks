@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Readers Writers Monitor</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    padding: 30px;
+}
+
+main {
+    max-width: 1050px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+.panel {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 15px 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 18px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+.controls {
+    text-align: center;
+    margin: 25px;
+}
+
+button {
+    padding: 10px 16px;
+    margin: 4px;
+}
+
+#message {
+    background: #111827;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<h1>Readers-Writers Monitor Simulation</h1>
+
+<div class="panel">
+<p>Event: <strong id="event"></strong></p>
+<p>Time: <strong id="time"></strong> seconds</p>
+<p>Shared value: <strong id="value"></strong></p>
+<p>Active readers: <strong id="activeReaders"></strong></p>
+<p>Waiting writers: <strong id="waitingWriters"></strong></p>
+<p>Writer active: <strong id="writerActive"></strong></p>
+</div>
+
+<h2>Readers</h2>
+<div id="readerArea" class="grid"></div>
+
+<h2>Writers</h2>
+<div id="writerArea" class="grid"></div>
+
+<div class="controls">
+<button onclick="previous()">Previous</button>
+<button onclick="play()">Play</button>
+<button onclick="pause()">Pause</button>
+<button onclick="next()">Next</button>
+<button onclick="resetSimulation()">Reset</button>
+</div>
+
+<div class="panel" id="message"></div>
+
+</main>
+
+
+<script>
+
+const events = [{"number":1,"time":0.011,"message":"Monitor simulation started","sharedValue":0,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Not Started","R2":"Not Started","R3":"Not Started","R4":"Not Started"},"writerStates":{"W1":"Not Started","W2":"Not Started"}},{"number":2,"time":0.432,"message":"R3 requested permission to read","sharedValue":0,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Not Started","R2":"Not Started","R3":"Waiting","R4":"Not Started"},"writerStates":{"W1":"Not Started","W2":"Not Started"}},{"number":3,"time":0.437,"message":"R3 entered reading section","sharedValue":0,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Not Started","R2":"Not Started","R3":"Reading","R4":"Not Started"},"writerStates":{"W1":"Not Started","W2":"Not Started"}},{"number":4,"time":0.462,"message":"W1 requested permission to write","sharedValue":0,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Not Started","R2":"Not Started","R3":"Reading","R4":"Not Started"},"writerStates":{"W1":"Waiting","W2":"Not Started"}},{"number":5,"time":0.476,"message":"W2 requested permission to write","sharedValue":0,"activeReaders":1,"waitingWriters":1,"writerActive":false,"readerStates":{"R1":"Not Started","R2":"Not Started","R3":"Reading","R4":"Not Started"},"writerStates":{"W1":"Waiting","W2":"Waiting"}},{"number":6,"time":0.533,"message":"R1 requested permission to read","sharedValue":0,"activeReaders":1,"waitingWriters":2,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Not Started","R3":"Reading","R4":"Not Started"},"writerStates":{"W1":"Waiting","W2":"Waiting"}},{"number":7,"time":0.600,"message":"R2 requested permission to read","sharedValue":0,"activeReaders":1,"waitingWriters":2,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Reading","R4":"Not Started"},"writerStates":{"W1":"Waiting","W2":"Waiting"}},{"number":8,"time":0.690,"message":"R4 requested permission to read","sharedValue":0,"activeReaders":1,"waitingWriters":2,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Reading","R4":"Waiting"},"writerStates":{"W1":"Waiting","W2":"Waiting"}},{"number":9,"time":0.956,"message":"R3 read value 0","sharedValue":0,"activeReaders":1,"waitingWriters":2,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Reading","R4":"Waiting"},"writerStates":{"W1":"Waiting","W2":"Waiting"}},{"number":10,"time":0.957,"message":"W1 entered writing section","sharedValue":0,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Finished Reading","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":11,"time":0.957,"message":"R3 finished reading","sharedValue":0,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Finished Reading","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":12,"time":1.581,"message":"R3 requested permission to read","sharedValue":0,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":13,"time":1.630,"message":"W1 changed value 0 -> 1","sharedValue":1,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":14,"time":1.631,"message":"W1 left writing section","sharedValue":1,"activeReaders":0,"waitingWriters":1,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Finished Writing","W2":"Waiting"}},{"number":15,"time":1.631,"message":"W2 entered writing section","sharedValue":1,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Finished Writing","W2":"Writing"}},{"number":16,"time":2.097,"message":"W1 requested permission to write","sharedValue":1,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Waiting","W2":"Writing"}},{"number":17,"time":2.286,"message":"W2 changed value 1 -> 2","sharedValue":2,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Waiting","W2":"Writing"}},{"number":18,"time":2.287,"message":"W2 left writing section","sharedValue":2,"activeReaders":0,"waitingWriters":1,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Waiting","W2":"Finished Writing"}},{"number":19,"time":2.288,"message":"W1 entered writing section","sharedValue":2,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Finished Writing"}},{"number":20,"time":2.679,"message":"W2 requested permission to write","sharedValue":2,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":21,"time":2.889,"message":"W1 changed value 2 -> 3","sharedValue":3,"activeReaders":0,"waitingWriters":1,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Writing","W2":"Waiting"}},{"number":22,"time":2.890,"message":"W1 left writing section","sharedValue":3,"activeReaders":0,"waitingWriters":1,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Finished Writing","W2":"Waiting"}},{"number":23,"time":2.891,"message":"W1 completed all writes","sharedValue":3,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Waiting"}},{"number":24,"time":2.891,"message":"W2 entered writing section","sharedValue":3,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Writing"}},{"number":25,"time":3.688,"message":"W2 changed value 3 -> 4","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":true,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Writing"}},{"number":26,"time":3.689,"message":"W2 left writing section","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Waiting","R3":"Waiting","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Finished Writing"}},{"number":27,"time":3.690,"message":"R3 entered reading section","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Waiting","R3":"Reading","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Finished Writing"}},{"number":28,"time":3.691,"message":"R2 entered reading section","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Reading","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Finished Writing"}},{"number":29,"time":3.692,"message":"R4 entered reading section","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Finished Writing"}},{"number":30,"time":3.693,"message":"R1 entered reading section","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":31,"time":3.694,"message":"W2 completed all writes","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":32,"time":4.310,"message":"R2 read value 4","sharedValue":4,"activeReaders":4,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":33,"time":4.312,"message":"R2 finished reading","sharedValue":4,"activeReaders":3,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Finished Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":34,"time":4.391,"message":"R3 read value 4","sharedValue":4,"activeReaders":3,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Finished Reading","R3":"Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":35,"time":4.391,"message":"R1 read value 4","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Finished Reading","R3":"Finished Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":36,"time":4.392,"message":"R1 finished reading","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Finished Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":37,"time":4.392,"message":"R3 finished reading","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Finished Reading","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":38,"time":4.392,"message":"R3 completed all reads","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":39,"time":4.523,"message":"R4 read value 4","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":40,"time":4.523,"message":"R4 finished reading","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Completed","R4":"Finished Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":41,"time":4.809,"message":"R4 requested permission to read","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Completed","R4":"Waiting"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":42,"time":4.810,"message":"R4 entered reading section","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Finished Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":43,"time":4.857,"message":"R2 requested permission to read","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Waiting","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":44,"time":4.858,"message":"R2 entered reading section","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":45,"time":4.973,"message":"R1 requested permission to read","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Waiting","R2":"Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":46,"time":4.973,"message":"R1 entered reading section","sharedValue":4,"activeReaders":3,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":47,"time":5.281,"message":"R4 read value 4","sharedValue":4,"activeReaders":3,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Completed","R4":"Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":48,"time":5.282,"message":"R4 finished reading","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Completed","R4":"Finished Reading"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":49,"time":5.282,"message":"R4 completed all reads","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":50,"time":5.511,"message":"R1 read value 4","sharedValue":4,"activeReaders":2,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Reading","R2":"Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":51,"time":5.513,"message":"R1 finished reading","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Finished Reading","R2":"Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":52,"time":5.513,"message":"R1 completed all reads","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Completed","R2":"Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":53,"time":5.672,"message":"R2 read value 4","sharedValue":4,"activeReaders":1,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Completed","R2":"Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":54,"time":5.672,"message":"R2 finished reading","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Completed","R2":"Finished Reading","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":55,"time":5.673,"message":"R2 completed all reads","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Completed","R2":"Completed","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}},{"number":56,"time":5.673,"message":"All monitor threads completed","sharedValue":4,"activeReaders":0,"waitingWriters":0,"writerActive":false,"readerStates":{"R1":"Completed","R2":"Completed","R3":"Completed","R4":"Completed"},"writerStates":{"W1":"Completed","W2":"Completed"}}];
+
+let index = 0;
+let timer = null;
+
+function render() {
+    const e = events[index];
+
+    document.getElementById("event").textContent = e.number + " / " + events.length;
+    document.getElementById("time").textContent = e.time.toFixed(3);
+    document.getElementById("value").textContent = e.sharedValue;
+    document.getElementById("activeReaders").textContent = e.activeReaders;
+    document.getElementById("waitingWriters").textContent = e.waitingWriters;
+    document.getElementById("writerActive").textContent = e.writerActive ? "Yes" : "No";
+    document.getElementById("message").textContent = e.message;
+
+    const readerArea = document.getElementById("readerArea");
+    readerArea.innerHTML = "";
+
+    Object.entries(e.readerStates).forEach(([name, state]) => {
+        readerArea.innerHTML += `
+            <div class="card">
+                <h3>${name}</h3>
+                <strong>${state}</strong>
+            </div>
+        `;
+    });
+
+    const writerArea = document.getElementById("writerArea");
+    writerArea.innerHTML = "";
+
+    Object.entries(e.writerStates).forEach(([name, state]) => {
+        writerArea.innerHTML += `
+            <div class="card">
+                <h3>${name}</h3>
+                <strong>${state}</strong>
+            </div>
+        `;
+    });
+}
+
+function next() {
+    if (index < events.length - 1) {
+        index++;
+        render();
+    }
+}
+
+function previous() {
+    if (index > 0) {
+        index--;
+        render();
+    }
+}
+
+function play() {
+    if (timer !== null) {
+        return;
+    }
+
+    timer = setInterval(() => {
+        if (index < events.length - 1) {
+            index++;
+            render();
+        } else {
+            pause();
+        }
+    }, 850);
+}
+
+function pause() {
+    clearInterval(timer);
+    timer = null;
+}
+
+function resetSimulation() {
+    pause();
+    index = 0;
+    render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>

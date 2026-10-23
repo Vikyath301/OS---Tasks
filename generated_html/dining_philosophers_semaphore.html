@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dining Philosophers Semaphore</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    padding: 30px;
+}
+
+main {
+    max-width: 1100px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+.table {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+}
+
+.philosophers,
+.forks {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.philosopher {
+    background: #eef2ff;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.fork {
+    background: #ffffff;
+    border: 2px solid #ddd;
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+.controls {
+    text-align: center;
+    margin: 25px;
+}
+
+button {
+    padding: 10px 16px;
+    margin: 4px;
+}
+
+.log {
+    background: #111827;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<h1>Dining Philosophers - Semaphore Simulation</h1>
+
+<div class="table">
+<h2>Philosophers</h2>
+<div class="philosophers" id="philosophers"></div>
+
+<h2>Fork Ownership</h2>
+<div class="forks" id="forks"></div>
+</div>
+
+<div class="controls">
+<button onclick="previous()">Previous</button>
+<button onclick="play()">Play</button>
+<button onclick="pause()">Pause</button>
+<button onclick="next()">Next</button>
+<button onclick="resetSimulation()">Reset</button>
+</div>
+
+<div class="log">
+<p>Event: <strong id="event"></strong></p>
+<p>Time: <strong id="time"></strong> seconds</p>
+<p id="message"></p>
+</div>
+
+</main>
+
+
+<script>
+
+const events = [{"number":1,"time":0.000,"message":"Dining Philosophers semaphore simulation started","states":["Thinking","Thinking","Thinking","Thinking"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":2,"time":0.053,"message":"P3 is thinking","states":["Thinking","Thinking","Thinking","Thinking"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":3,"time":0.054,"message":"P1 is thinking","states":["Thinking","Thinking","Thinking","Thinking"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":4,"time":0.054,"message":"P0 is thinking","states":["Thinking","Thinking","Thinking","Thinking"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":5,"time":0.055,"message":"P2 is thinking","states":["Thinking","Thinking","Thinking","Thinking"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":6,"time":0.538,"message":"P3 became hungry","states":["Hungry / Waiting","Thinking","Thinking","Hungry / Waiting"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":7,"time":0.539,"message":"P0 became hungry","states":["Hungry / Waiting","Thinking","Thinking","Hungry / Waiting"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":8,"time":0.555,"message":"P3 is trying to acquire F3 and F0","states":["Acquiring Forks","Thinking","Thinking","Acquiring Forks"],"forkOwners":[-1,-1,-1,-1],"meals":[0,0,0,0]},{"number":9,"time":0.556,"message":"P0 is trying to acquire F0 and F1","states":["Acquiring Forks","Thinking","Thinking","Acquiring Forks"],"forkOwners":[-1,-1,-1,3],"meals":[0,0,0,0]},{"number":10,"time":0.560,"message":"P3 acquired F3","states":["Acquiring Forks","Thinking","Thinking","Acquiring Forks"],"forkOwners":[0,-1,-1,3],"meals":[0,0,0,0]},{"number":11,"time":0.561,"message":"P0 acquired F0","states":["Acquiring Forks","Thinking","Thinking","Acquiring Forks"],"forkOwners":[0,-1,-1,3],"meals":[0,0,0,0]},{"number":12,"time":0.561,"message":"P0 acquired F1 and started eating","states":["Eating","Thinking","Thinking","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[0,0,0,0]},{"number":13,"time":0.821,"message":"P2 became hungry","states":["Eating","Thinking","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[0,0,0,0]},{"number":14,"time":0.822,"message":"P2 is trying to acquire F2 and F3","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[0,0,0,0]},{"number":15,"time":0.822,"message":"P2 acquired F2","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[0,0,0,0]},{"number":16,"time":0.839,"message":"P1 became hungry","states":["Eating","Hungry / Waiting","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[0,0,0,0]},{"number":17,"time":1.169,"message":"P0 completed meal 1","states":["Eating","Hungry / Waiting","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[1,0,0,0]},{"number":18,"time":1.170,"message":"P0 is releasing forks","states":["Releasing Forks","Hungry / Waiting","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[1,0,0,0]},{"number":19,"time":1.171,"message":"P0 released F1","states":["Releasing Forks","Hungry / Waiting","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,-1,2,3],"meals":[1,0,0,0]},{"number":20,"time":1.171,"message":"P3 acquired F0 and started eating","states":["Releasing Forks","Hungry / Waiting","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[1,0,0,0]},{"number":21,"time":1.172,"message":"P0 released F0","states":["Releasing Forks","Hungry / Waiting","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[1,0,0,0]},{"number":22,"time":1.173,"message":"P0 is thinking","states":["Thinking","Hungry / Waiting","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[1,0,0,0]},{"number":23,"time":1.173,"message":"P1 is trying to acquire F1 and F2","states":["Thinking","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[1,0,0,0]},{"number":24,"time":1.174,"message":"P1 acquired F1","states":["Thinking","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[1,0,0,0]},{"number":25,"time":1.700,"message":"P0 became hungry","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[1,0,0,0]},{"number":26,"time":1.807,"message":"P3 completed meal 1","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[1,0,0,1]},{"number":27,"time":1.808,"message":"P3 is releasing forks","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[3,1,2,3],"meals":[1,0,0,1]},{"number":28,"time":1.808,"message":"P3 released F0","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[-1,1,2,3],"meals":[1,0,0,1]},{"number":29,"time":1.809,"message":"P3 released F3","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[-1,1,2,-1],"meals":[1,0,0,1]},{"number":30,"time":1.809,"message":"P2 acquired F3 and started eating","states":["Hungry / Waiting","Acquiring Forks","Eating","Releasing Forks"],"forkOwners":[-1,1,2,2],"meals":[1,0,0,1]},{"number":31,"time":1.810,"message":"P3 is thinking","states":["Hungry / Waiting","Acquiring Forks","Eating","Thinking"],"forkOwners":[-1,1,2,2],"meals":[1,0,0,1]},{"number":32,"time":1.810,"message":"P0 is trying to acquire F0 and F1","states":["Acquiring Forks","Acquiring Forks","Eating","Thinking"],"forkOwners":[-1,1,2,2],"meals":[1,0,0,1]},{"number":33,"time":1.811,"message":"P0 acquired F0","states":["Acquiring Forks","Acquiring Forks","Eating","Thinking"],"forkOwners":[0,1,2,2],"meals":[1,0,0,1]},{"number":34,"time":2.340,"message":"P3 became hungry","states":["Acquiring Forks","Acquiring Forks","Eating","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[1,0,0,1]},{"number":35,"time":2.541,"message":"P2 completed meal 1","states":["Acquiring Forks","Acquiring Forks","Eating","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[1,0,1,1]},{"number":36,"time":2.541,"message":"P2 is releasing forks","states":["Acquiring Forks","Acquiring Forks","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[1,0,1,1]},{"number":37,"time":2.542,"message":"P2 released F3","states":["Acquiring Forks","Acquiring Forks","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,2,-1],"meals":[1,0,1,1]},{"number":38,"time":2.542,"message":"P2 released F2","states":["Acquiring Forks","Acquiring Forks","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,-1,-1],"meals":[1,0,1,1]},{"number":39,"time":2.543,"message":"P2 is thinking","states":["Acquiring Forks","Eating","Thinking","Hungry / Waiting"],"forkOwners":[0,1,1,-1],"meals":[1,0,1,1]},{"number":40,"time":2.543,"message":"P1 acquired F2 and started eating","states":["Acquiring Forks","Eating","Thinking","Acquiring Forks"],"forkOwners":[0,1,1,-1],"meals":[1,0,1,1]},{"number":41,"time":2.543,"message":"P3 is trying to acquire F3 and F0","states":["Acquiring Forks","Eating","Thinking","Acquiring Forks"],"forkOwners":[0,1,1,-1],"meals":[1,0,1,1]},{"number":42,"time":2.544,"message":"P3 acquired F3","states":["Acquiring Forks","Eating","Thinking","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[1,0,1,1]},{"number":43,"time":3.358,"message":"P2 became hungry","states":["Acquiring Forks","Eating","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[1,0,1,1]},{"number":44,"time":3.389,"message":"P1 completed meal 1","states":["Acquiring Forks","Eating","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[1,1,1,1]},{"number":45,"time":3.390,"message":"P1 is releasing forks","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[1,1,1,1]},{"number":46,"time":3.390,"message":"P1 released F2","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,-1,3],"meals":[1,1,1,1]},{"number":47,"time":3.390,"message":"P1 released F1","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,-1,-1,3],"meals":[1,1,1,1]},{"number":48,"time":3.391,"message":"P1 is thinking","states":["Eating","Thinking","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[1,1,1,1]},{"number":49,"time":3.391,"message":"P0 acquired F1 and started eating","states":["Eating","Thinking","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[1,1,1,1]},{"number":50,"time":3.392,"message":"P2 is trying to acquire F2 and F3","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[1,1,1,1]},{"number":51,"time":3.392,"message":"P2 acquired F2","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[1,1,1,1]},{"number":52,"time":3.942,"message":"P0 completed meal 2","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[2,1,1,1]},{"number":53,"time":3.943,"message":"P0 is releasing forks","states":["Releasing Forks","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[2,1,1,1]},{"number":54,"time":3.943,"message":"P0 released F1","states":["Releasing Forks","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,-1,2,3],"meals":[2,1,1,1]},{"number":55,"time":3.943,"message":"P0 released F0","states":["Releasing Forks","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[-1,-1,2,3],"meals":[2,1,1,1]},{"number":56,"time":3.943,"message":"P0 is thinking","states":["Thinking","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[-1,-1,2,3],"meals":[2,1,1,1]},{"number":57,"time":3.944,"message":"P3 acquired F0 and started eating","states":["Thinking","Thinking","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[2,1,1,1]},{"number":58,"time":3.981,"message":"P1 became hungry","states":["Thinking","Hungry / Waiting","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[2,1,1,1]},{"number":59,"time":3.981,"message":"P1 is trying to acquire F1 and F2","states":["Thinking","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[2,1,1,1]},{"number":60,"time":3.981,"message":"P1 acquired F1","states":["Thinking","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[2,1,1,1]},{"number":61,"time":4.660,"message":"P0 became hungry","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[2,1,1,1]},{"number":62,"time":4.746,"message":"P3 completed meal 2","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[2,1,1,2]},{"number":63,"time":4.747,"message":"P3 is releasing forks","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[3,1,2,3],"meals":[2,1,1,2]},{"number":64,"time":4.747,"message":"P3 released F0","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[-1,1,2,3],"meals":[2,1,1,2]},{"number":65,"time":4.747,"message":"P3 released F3","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[-1,1,2,-1],"meals":[2,1,1,2]},{"number":66,"time":4.747,"message":"P3 is thinking","states":["Hungry / Waiting","Acquiring Forks","Acquiring Forks","Thinking"],"forkOwners":[-1,1,2,-1],"meals":[2,1,1,2]},{"number":67,"time":4.748,"message":"P2 acquired F3 and started eating","states":["Acquiring Forks","Acquiring Forks","Eating","Thinking"],"forkOwners":[-1,1,2,2],"meals":[2,1,1,2]},{"number":68,"time":4.748,"message":"P0 is trying to acquire F0 and F1","states":["Acquiring Forks","Acquiring Forks","Eating","Thinking"],"forkOwners":[-1,1,2,2],"meals":[2,1,1,2]},{"number":69,"time":4.749,"message":"P0 acquired F0","states":["Acquiring Forks","Acquiring Forks","Eating","Thinking"],"forkOwners":[0,1,2,2],"meals":[2,1,1,2]},{"number":70,"time":5.492,"message":"P3 became hungry","states":["Acquiring Forks","Acquiring Forks","Eating","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[2,1,1,2]},{"number":71,"time":5.657,"message":"P2 completed meal 2","states":["Acquiring Forks","Acquiring Forks","Eating","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[2,1,2,2]},{"number":72,"time":5.658,"message":"P2 is releasing forks","states":["Acquiring Forks","Acquiring Forks","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,2,2],"meals":[2,1,2,2]},{"number":73,"time":5.658,"message":"P2 released F3","states":["Acquiring Forks","Acquiring Forks","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,2,-1],"meals":[2,1,2,2]},{"number":74,"time":5.658,"message":"P1 acquired F2 and started eating","states":["Acquiring Forks","Eating","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,1,-1],"meals":[2,1,2,2]},{"number":75,"time":5.659,"message":"P2 released F2","states":["Acquiring Forks","Eating","Releasing Forks","Hungry / Waiting"],"forkOwners":[0,1,1,-1],"meals":[2,1,2,2]},{"number":76,"time":5.659,"message":"P2 is thinking","states":["Acquiring Forks","Eating","Thinking","Hungry / Waiting"],"forkOwners":[0,1,1,-1],"meals":[2,1,2,2]},{"number":77,"time":5.659,"message":"P3 is trying to acquire F3 and F0","states":["Acquiring Forks","Eating","Thinking","Acquiring Forks"],"forkOwners":[0,1,1,-1],"meals":[2,1,2,2]},{"number":78,"time":5.659,"message":"P3 acquired F3","states":["Acquiring Forks","Eating","Thinking","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[2,1,2,2]},{"number":79,"time":6.128,"message":"P2 became hungry","states":["Acquiring Forks","Eating","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[2,1,2,2]},{"number":80,"time":6.446,"message":"P1 completed meal 2","states":["Acquiring Forks","Eating","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[2,2,2,2]},{"number":81,"time":6.446,"message":"P1 is releasing forks","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,1,3],"meals":[2,2,2,2]},{"number":82,"time":6.446,"message":"P1 released F2","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,1,-1,3],"meals":[2,2,2,2]},{"number":83,"time":6.446,"message":"P1 released F1","states":["Acquiring Forks","Releasing Forks","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,-1,-1,3],"meals":[2,2,2,2]},{"number":84,"time":6.447,"message":"P1 is thinking","states":["Eating","Thinking","Hungry / Waiting","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[2,2,2,2]},{"number":85,"time":6.447,"message":"P0 acquired F1 and started eating","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[2,2,2,2]},{"number":86,"time":6.447,"message":"P2 is trying to acquire F2 and F3","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,-1,3],"meals":[2,2,2,2]},{"number":87,"time":6.447,"message":"P2 acquired F2","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[2,2,2,2]},{"number":88,"time":7.049,"message":"P0 completed meal 3","states":["Eating","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[3,2,2,2]},{"number":89,"time":7.050,"message":"P0 is releasing forks","states":["Releasing Forks","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,0,2,3],"meals":[3,2,2,2]},{"number":90,"time":7.050,"message":"P0 released F1","states":["Releasing Forks","Thinking","Acquiring Forks","Acquiring Forks"],"forkOwners":[0,-1,2,3],"meals":[3,2,2,2]},{"number":91,"time":7.050,"message":"P3 acquired F0 and started eating","states":["Releasing Forks","Thinking","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[3,2,2,2]},{"number":92,"time":7.051,"message":"P0 released F0","states":["Releasing Forks","Thinking","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[3,2,2,2]},{"number":93,"time":7.052,"message":"P0 completed all meals","states":["Completed","Thinking","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[3,2,2,2]},{"number":94,"time":7.264,"message":"P1 became hungry","states":["Completed","Hungry / Waiting","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[3,2,2,2]},{"number":95,"time":7.265,"message":"P1 is trying to acquire F1 and F2","states":["Completed","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,-1,2,3],"meals":[3,2,2,2]},{"number":96,"time":7.265,"message":"P1 acquired F1","states":["Completed","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[3,2,2,2]},{"number":97,"time":7.913,"message":"P3 completed meal 3","states":["Completed","Acquiring Forks","Acquiring Forks","Eating"],"forkOwners":[3,1,2,3],"meals":[3,2,2,3]},{"number":98,"time":7.914,"message":"P3 is releasing forks","states":["Completed","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[3,1,2,3],"meals":[3,2,2,3]},{"number":99,"time":7.914,"message":"P3 released F0","states":["Completed","Acquiring Forks","Acquiring Forks","Releasing Forks"],"forkOwners":[-1,1,2,3],"meals":[3,2,2,3]},{"number":100,"time":7.914,"message":"P3 released F3","states":["Completed","Acquiring Forks","Eating","Releasing Forks"],"forkOwners":[-1,1,2,2],"meals":[3,2,2,3]},{"number":101,"time":7.914,"message":"P3 completed all meals","states":["Completed","Acquiring Forks","Eating","Completed"],"forkOwners":[-1,1,2,2],"meals":[3,2,2,3]},{"number":102,"time":7.914,"message":"P2 acquired F3 and started eating","states":["Completed","Acquiring Forks","Eating","Completed"],"forkOwners":[-1,1,2,2],"meals":[3,2,2,3]},{"number":103,"time":8.710,"message":"P2 completed meal 3","states":["Completed","Acquiring Forks","Eating","Completed"],"forkOwners":[-1,1,2,2],"meals":[3,2,3,3]},{"number":104,"time":8.711,"message":"P2 is releasing forks","states":["Completed","Acquiring Forks","Releasing Forks","Completed"],"forkOwners":[-1,1,2,2],"meals":[3,2,3,3]},{"number":105,"time":8.711,"message":"P2 released F3","states":["Completed","Acquiring Forks","Releasing Forks","Completed"],"forkOwners":[-1,1,2,-1],"meals":[3,2,3,3]},{"number":106,"time":8.714,"message":"P2 released F2","states":["Completed","Acquiring Forks","Releasing Forks","Completed"],"forkOwners":[-1,1,-1,-1],"meals":[3,2,3,3]},{"number":107,"time":8.715,"message":"P2 completed all meals","states":["Completed","Acquiring Forks","Completed","Completed"],"forkOwners":[-1,1,-1,-1],"meals":[3,2,3,3]},{"number":108,"time":8.715,"message":"P1 acquired F2 and started eating","states":["Completed","Eating","Completed","Completed"],"forkOwners":[-1,1,1,-1],"meals":[3,2,3,3]},{"number":109,"time":9.308,"message":"P1 completed meal 3","states":["Completed","Eating","Completed","Completed"],"forkOwners":[-1,1,1,-1],"meals":[3,3,3,3]},{"number":110,"time":9.309,"message":"P1 is releasing forks","states":["Completed","Releasing Forks","Completed","Completed"],"forkOwners":[-1,1,1,-1],"meals":[3,3,3,3]},{"number":111,"time":9.309,"message":"P1 released F2","states":["Completed","Releasing Forks","Completed","Completed"],"forkOwners":[-1,1,-1,-1],"meals":[3,3,3,3]},{"number":112,"time":9.309,"message":"P1 released F1","states":["Completed","Releasing Forks","Completed","Completed"],"forkOwners":[-1,-1,-1,-1],"meals":[3,3,3,3]},{"number":113,"time":9.310,"message":"P1 completed all meals","states":["Completed","Completed","Completed","Completed"],"forkOwners":[-1,-1,-1,-1],"meals":[3,3,3,3]},{"number":114,"time":9.310,"message":"All philosophers completed","states":["Completed","Completed","Completed","Completed"],"forkOwners":[-1,-1,-1,-1],"meals":[3,3,3,3]}];
+
+let index = 0;
+let timer = null;
+
+function render() {
+    const e = events[index];
+
+    document.getElementById("event").textContent = e.number + " / " + events.length;
+    document.getElementById("time").textContent = e.time.toFixed(3);
+    document.getElementById("message").textContent = e.message;
+
+    const philosophers = document.getElementById("philosophers");
+    philosophers.innerHTML = "";
+
+    e.states.forEach((state, i) => {
+        philosophers.innerHTML += `
+            <div class="philosopher">
+                <h2>P${i}</h2>
+                <strong>${state}</strong>
+                <p>Meals completed: ${e.meals[i]}</p>
+            </div>
+        `;
+    });
+
+    const forkArea = document.getElementById("forks");
+    forkArea.innerHTML = "";
+
+    e.forkOwners.forEach((owner, i) => {
+        const status = owner === -1 ? "Available" : "Owned by P" + owner;
+
+        forkArea.innerHTML += `
+            <div class="fork">
+                <strong>F${i}</strong>
+                <br><br>
+                ${status}
+            </div>
+        `;
+    });
+}
+
+function next() {
+    if (index < events.length - 1) {
+        index++;
+        render();
+    }
+}
+
+function previous() {
+    if (index > 0) {
+        index--;
+        render();
+    }
+}
+
+function play() {
+    if (timer !== null) {
+        return;
+    }
+
+    timer = setInterval(() => {
+        if (index < events.length - 1) {
+            index++;
+            render();
+        } else {
+            pause();
+        }
+    }, 800);
+}
+
+function pause() {
+    clearInterval(timer);
+    timer = null;
+}
+
+function resetSimulation() {
+    pause();
+    index = 0;
+    render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>
